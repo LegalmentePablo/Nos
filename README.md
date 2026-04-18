@@ -48,6 +48,30 @@ Implementacion MVP alineada con tu plan maestro: comandos locales ultrarrapidos 
 - `abre carpeta descargas`
 - `hablemos un rato`
 
+## Modo Voz Local (STT)
+
+1. Instalar stack de voz opcional:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[voice]"
+```
+
+2. Activar STT en `config/settings.yaml`:
+
+- `stt_enabled: true`
+- Ajustar `stt_model_size`, `stt_compute_type`, `stt_record_seconds` segun latencia/calidad.
+
+3. Ejecutar asistente:
+
+```powershell
+.\.venv\Scripts\python.exe -m local_assistant.main
+```
+
+Notas:
+
+- Si STT esta activo, el asistente entra en modo voz automaticamente.
+- Si faltan dependencias de voz, muestra error claro y vuelve a modo texto.
+
 ## Flujo Local De Calidad
 
 Todo se ejecuta en tu maquina, sin CI en la nube.

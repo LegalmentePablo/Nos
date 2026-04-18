@@ -18,7 +18,10 @@ class IntentRouter:
         self._rules = [
             PatternRule(
                 IntentName.OPEN_APP,
-                re.compile(r"\b(?:abre|abrir|inicia)\s+(?P<app>[\w\s.-]+)$", re.I),
+                re.compile(
+                    r"\b(?:abre|abrir|inicia|iniciar|ejecuta|ahora)\s+(?P<app>[\w\s.-]+)$",
+                    re.I,
+                ),
                 0.95,
             ),
             PatternRule(

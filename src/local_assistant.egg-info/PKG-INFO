@@ -14,6 +14,9 @@ Requires-Dist: ruff>=0.7.0; extra == "dev"
 Requires-Dist: mypy>=1.12.0; extra == "dev"
 Requires-Dist: types-requests>=2.32.0; extra == "dev"
 Requires-Dist: types-PyYAML>=6.0.12; extra == "dev"
+Provides-Extra: voice
+Requires-Dist: faster-whisper>=1.1.0; extra == "voice"
+Requires-Dist: sounddevice>=0.5.1; extra == "voice"
 
 # Asistente Local Hibrido (Windows)
 
@@ -65,6 +68,30 @@ Implementacion MVP alineada con tu plan maestro: comandos locales ultrarrapidos 
 - `abre carpeta descargas`
 - `hablemos un rato`
 
+## Modo Voz Local (STT)
+
+1. Instalar stack de voz opcional:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e ".[voice]"
+```
+
+2. Activar STT en `config/settings.yaml`:
+
+- `stt_enabled: true`
+- Ajustar `stt_model_size`, `stt_compute_type`, `stt_record_seconds` segun latencia/calidad.
+
+3. Ejecutar asistente:
+
+```powershell
+.\.venv\Scripts\python.exe -m local_assistant.main
+```
+
+Notas:
+
+- Si STT esta activo, el asistente entra en modo voz automaticamente.
+- Si faltan dependencias de voz, muestra error claro y vuelve a modo texto.
+
 ## Flujo Local De Calidad
 
 Todo se ejecuta en tu maquina, sin CI en la nube.
@@ -87,6 +114,72 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 - Type-check con Mypy.
 - Pruebas con Pytest.
 - El script termina con error si cualquiera de los pasos falla.
+
+## Pre-Commit Local (Sin Nube)
+
+1. Instalar hook local de Git:
+
+```powershell
+./scripts/install_precommit_hook.ps1
+```
+
+2. Que hace:
+
+- Antes de cada commit ejecuta `scripts/pre_commit.ps1`.
+- Ese script corre `scripts/quality_check.ps1`.
+- Si falla lint, type-check o tests, se cancela el commit.
+
+3. Nota:
+
+- Si aun no tienes repo Git local, inicializa con `git init` primero.
+
+## Si Quieres GitHub Actions (Opcional)
+
+Si luego quieres CI en GitHub, crea este archivo:
+
+- `.github/workflows/ci.yml`
+
+Contenido recomendado:
+
+```yaml
+name: ci
+
+on:
+	push:
+		branches: ["main", "master"]
+	pull_request:
+
+jobs:
+	quality:
+		runs-on: ubuntu-latest
+		steps:
+			- uses: actions/checkout@v4
+
+			- uses: actions/setup-python@v5
+				with:
+					python-version: "3.11"
+
+			- name: Install dependencies
+				run: |
+					python -m pip install --upgrade pip
+					pip install -e ".[dev]"
+
+			- name: Ruff
+				run: python -m ruff check .
+
+			- name: Mypy
+				run: python -m mypy src
+
+			- name: Pytest
+				run: python -m pytest -q
+```
+
+Checklist para activarlo:
+
+1. Crear repositorio en GitHub y hacer `git push`.
+2. Subir `.github/workflows/ci.yml`.
+3. Verificar en pestaña Actions que el job `quality` pase.
+4. (Recomendado) activar branch protection para exigir CI verde antes de merge.
 
 ## Integracion recomendada (siguiente fase)
 

@@ -18,7 +18,25 @@ class AssistantConfig(BaseModel):
 
     dry_run: bool = True
 
+    stt_enabled: bool = False
+    stt_model_size: str = "base"
+    stt_compute_type: str = "int8"
+    stt_device: str = "cpu"
+    stt_input_device: str = "default"
+    stt_language: str = "es"
+    stt_beam_size: int = Field(default=5, ge=1, le=10)
+    stt_vad_filter: bool = True
+    stt_sample_rate_hz: int = Field(default=16_000, ge=8_000, le=48_000)
+    stt_record_seconds: float = Field(default=4.0, gt=0.2, le=15.0)
+    stt_streaming_enabled: bool = True
+    stt_emit_partials: bool = False
+    stt_chunk_seconds: float = Field(default=0.2, ge=0.05, le=1.0)
+    stt_partial_interval_seconds: float = Field(default=0.5, ge=0.1, le=3.0)
+    stt_silence_seconds: float = Field(default=0.8, ge=0.2, le=3.0)
+    stt_energy_threshold: float = Field(default=0.01, ge=0.001, le=0.2)
+
     app_whitelist: dict[str, str] = Field(default_factory=dict)
+    app_aliases: dict[str, str] = Field(default_factory=dict)
     folder_whitelist: dict[str, str] = Field(default_factory=dict)
 
 

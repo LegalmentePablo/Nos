@@ -28,3 +28,12 @@ def test_unknown_route() -> None:
 
     assert result.name == IntentName.UNKNOWN
     assert result.confidence == 0.0
+
+
+def test_open_app_route_with_stt_like_phrase() -> None:
+    router = IntentRouter()
+
+    result = router.route("ahora google chrome")
+
+    assert result.name == IntentName.OPEN_APP
+    assert result.params["app"].lower() == "google chrome"

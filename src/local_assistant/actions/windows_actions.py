@@ -8,11 +8,13 @@ from urllib.parse import quote_plus
 
 from ..config import AssistantConfig
 from ..models import AssistantReply, IntentName, IntentResult
+from .app_resolver import AppResolver
 
 
 class WindowsActionExecutor:
     def __init__(self, config: AssistantConfig) -> None:
         self._config = config
+        self._app_resolver = AppResolver(config.app_whitelist, config.app_aliases)
 
     def execute(self, intent: IntentResult) -> AssistantReply:
         if intent.name == IntentName.OPEN_APP:
@@ -44,9 +46,16 @@ class WindowsActionExecutor:
 
         return AssistantReply(text="No tengo una accion local para ese comando.", source="actions")
 
+    def try_open_app_from_free_text(self, text: str) -> AssistantReply | None:
+        resolved_key = self._app_resolver.resolve(text)
+        if not resolved_key:
+            return None
+        return self._open_app(resolved_key)
+
     def _open_app(self, app_name: str) -> AssistantReply:
-        key = app_name.lower().strip()
-        command = self._config.app_whitelist.get(key)
+        resolved_key = self._app_resolver.resolve(app_name)
+        command = self._config.app_whitelist.get(resolved_key) if resolved_key else None
+
         if not command:
             return AssistantReply(
                 text=f"La app '{app_name}' no esta en la lista blanca.", source="actions"

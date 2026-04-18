@@ -23,7 +23,8 @@ def _base_config() -> AssistantConfig:
         llm_intent_threshold=0.8,
         llm_chat_timeout_seconds=180,
         dry_run=True,
-        app_whitelist={"discord": "start discord"},
+        app_whitelist={"discord": "start discord", "chrome": "start chrome"},
+        app_aliases={"google chorme": "chrome"},
         folder_whitelist={"descargas": "%USERPROFILE%\\Downloads"},
     )
 
@@ -98,3 +99,20 @@ def test_integration_low_confidence_goes_to_llm() -> None:
     assert reply.source == "llm"
     assert reply.text == "fallback por confianza"
     assert llm.calls == 1
+
+
+def test_integration_single_word_app_name_opens_app() -> None:
+    cfg = _base_config()
+    assistant = LocalAssistant(
+        config=cfg,
+        router=IntentRouter(),
+        actions=WindowsActionExecutor(cfg),
+        llm=None,
+        logger=logging.getLogger("test.integration"),
+    )
+
+    reply = assistant.handle_text("chrome")
+
+    assert reply.source == "actions"
+    assert "[dry-run]" in reply.text
+    assert "start chrome" in reply.text.lower()

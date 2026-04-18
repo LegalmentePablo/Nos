@@ -24,6 +24,10 @@ class FakeActions:
         self.called += 1
         return self.reply
 
+    def try_open_app_from_free_text(self, text: str) -> AssistantReply | None:
+        _ = text
+        return None
+
 
 class FakeLlm:
     def __init__(self, response: str = "ok", explode: bool = False) -> None:
@@ -102,3 +106,29 @@ def test_llm_failure_returns_safe_message() -> None:
 
     assert reply.source == "llm"
     assert "no pude contactar" in reply.text.lower()
+
+
+def test_low_information_unknown_text_does_not_call_llm() -> None:
+    router = FakeRouter(IntentResult(name=IntentName.UNKNOWN, confidence=0.0, params={}))
+    actions = FakeActions(AssistantReply(text="unused", source="actions"))
+    llm = FakeLlm(response="no deberia llamarse")
+
+    assistant = LocalAssistant(_config(), router, actions, llm, logging.getLogger("test"))
+    reply = assistant.handle_text("pero?")
+
+    assert reply.source == "router"
+    assert "no te entendi" in reply.text.lower()
+    assert llm.called == 0
+
+
+def test_filler_only_unknown_text_does_not_call_llm() -> None:
+    router = FakeRouter(IntentResult(name=IntentName.UNKNOWN, confidence=0.0, params={}))
+    actions = FakeActions(AssistantReply(text="unused", source="actions"))
+    llm = FakeLlm(response="no deberia llamarse")
+
+    assistant = LocalAssistant(_config(), router, actions, llm, logging.getLogger("test"))
+    reply = assistant.handle_text("por favor")
+
+    assert reply.source == "router"
+    assert "no te entendi" in reply.text.lower()
+    assert llm.called == 0
