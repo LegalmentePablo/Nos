@@ -2,3 +2,7 @@ pyyaml>=6.0.2
 requests>=2.32.3
 pydantic>=2.9.2
 pytest>=8.3.3
+
+# Optional voice stack (install as needed)
+# faster-whisper>=1.1.0
+# sounddevice>=0.5.1

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -17,6 +18,18 @@ class AssistantState:
 
 
 class LocalAssistant:
+    _FILLER_TOKENS = {
+        "a",
+        "ah",
+        "eh",
+        "hola",
+        "ok",
+        "vale",
+        "por",
+        "favor",
+        "please",
+    }
+
     def __init__(
         self,
         config: AssistantConfig,
@@ -52,6 +65,23 @@ class LocalAssistant:
             reply = self._actions.execute(intent)
             self._log_event("reply", {"source": reply.source, "text": reply.text})
             return reply
+
+        if intent.name == IntentName.UNKNOWN:
+            inferred_reply = self._actions.try_open_app_from_free_text(text)
+            if inferred_reply is not None:
+                self._log_event(
+                    "reply",
+                    {"source": inferred_reply.source, "text": inferred_reply.text},
+                )
+                return inferred_reply
+
+            if not self._is_chat_mode_active() and self._is_low_information(text):
+                reply = AssistantReply(
+                    text="No te entendi bien. Di un comando mas claro, por ejemplo: abre chrome.",
+                    source="router",
+                )
+                self._log_event("reply", {"source": reply.source, "text": reply.text})
+                return reply
 
         if self._is_chat_mode_active() or self._config.llm_enabled:
             llm_reply = self._ask_llm(text)
@@ -90,6 +120,17 @@ class LocalAssistant:
     def _is_chat_mode_active(self) -> bool:
         expires = self._state.chat_mode_until
         return expires is not None and datetime.now(UTC) <= expires
+
+    def _is_low_information(self, text: str) -> bool:
+        normalized = re.sub(r"[^\w\s]", " ", text.lower()).strip()
+        tokens = [token for token in normalized.split() if token]
+        if not tokens:
+            return True
+        if len(tokens) == 1:
+            return True
+        if all(token in self._FILLER_TOKENS for token in tokens):
+            return True
+        return False
 
     def _log_event(self, event: str, data: dict[str, object]) -> None:
         self._logger.info("assistant_event", extra={"event": event, "data": data})

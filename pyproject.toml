@@ -23,6 +23,10 @@ dev = [
   "types-requests>=2.32.0",
   "types-PyYAML>=6.0.12",
 ]
+voice = [
+  "faster-whisper>=1.1.0",
+  "sounddevice>=0.5.1",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

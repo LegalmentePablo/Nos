@@ -26,4 +26,5 @@ tests/test_integration_flow.py
 tests/test_intent_router.py
 tests/test_main_build_integration.py
 tests/test_ollama_client.py
+tests/test_stt_faster_whisper.py
 tests/test_windows_actions.py

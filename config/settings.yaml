@@ -4,12 +4,34 @@ llm_chat_timeout_seconds: 180
 llm_model: "qwen2.5:3b-instruct-q4_K_M"
 ollama_host: "http://127.0.0.1:11434"
 
-dry_run: true
+dry_run: false
+
+stt_enabled: true
+stt_model_size: "small"
+stt_compute_type: "int8"
+stt_device: "cpu"
+stt_input_device: "default"
+stt_language: "es"
+stt_beam_size: 5
+stt_vad_filter: true
+stt_sample_rate_hz: 16000
+stt_record_seconds: 5.0
+stt_streaming_enabled: true
+stt_emit_partials: false
+stt_chunk_seconds: 0.2
+stt_partial_interval_seconds: 0.5
+stt_silence_seconds: 0.8
+stt_energy_threshold: 0.01
 
 app_whitelist:
   discord: "start discord"
   spotify: "start spotify"
   chrome: "start chrome"
+
+app_aliases:
+  google chrome: "chrome"
+  google chorme: "chrome"
+  chorme: "chrome"
 
 folder_whitelist:
   descargas: "%USERPROFILE%\\Downloads"
