@@ -1,0 +1,167 @@
+# Asistente Local Hibrido (Windows)
+
+Implementacion MVP alineada con tu plan maestro: comandos locales ultrarrapidos por reglas, y fallback a LLM local con Ollama solo cuando hace falta.
+
+## Principios aplicados
+
+- Arquitectura hibrida: `rules-first`, `LLM-on-demand`.
+- Seguridad por defecto: lista blanca + modo `dry_run`.
+- Dise\u00f1o desacoplado: router, acciones, LLM, STT y TTS en modulos separados.
+- Observabilidad: logs JSON locales en `logs/assistant.log`.
+
+## Estructura
+
+- `src/local_assistant/main.py`: entrada principal.
+- `src/local_assistant/assistant.py`: orquestacion y politica LLM.
+- `src/local_assistant/intent_router.py`: intents por patrones.
+- `src/local_assistant/actions/windows_actions.py`: acciones Windows seguras.
+- `src/local_assistant/llm/ollama_client.py`: cliente Ollama.
+- `config/settings.yaml`: configuracion local.
+
+## Quickstart
+
+1. Crear entorno e instalar dependencias (local):
+
+```powershell
+./scripts/bootstrap_local.ps1
+```
+
+2. Ejecutar pruebas unitarias:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+3. Ajustar lista blanca en `config/settings.yaml`.
+
+4. Ejecutar en modo consola:
+
+```powershell
+.\.venv\Scripts\python.exe -m local_assistant.main
+```
+
+5. Probar comandos:
+
+- `abre discord`
+- `busca en google mejores teclados mecanicos`
+- `busca en youtube benchmark 4070 ti`
+- `abre carpeta descargas`
+- `hablemos un rato`
+
+## Flujo Local De Calidad
+
+Todo se ejecuta en tu maquina, sin CI en la nube.
+
+1. Ejecutar chequeos completos:
+
+```powershell
+./scripts/quality_check.ps1
+```
+
+Si PowerShell bloquea scripts en tu equipo, habilitalos solo para la sesion actual:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+```
+
+2. Que valida este script:
+
+- Lint con Ruff.
+- Type-check con Mypy.
+- Pruebas con Pytest.
+- El script termina con error si cualquiera de los pasos falla.
+
+## Pre-Commit Local (Sin Nube)
+
+1. Instalar hook local de Git:
+
+```powershell
+./scripts/install_precommit_hook.ps1
+```
+
+2. Que hace:
+
+- Antes de cada commit ejecuta `scripts/pre_commit.ps1`.
+- Ese script corre `scripts/quality_check.ps1`.
+- Si falla lint, type-check o tests, se cancela el commit.
+
+3. Nota:
+
+- Si aun no tienes repo Git local, inicializa con `git init` primero.
+
+## Si Quieres GitHub Actions (Opcional)
+
+Si luego quieres CI en GitHub, crea este archivo:
+
+- `.github/workflows/ci.yml`
+
+Contenido recomendado:
+
+```yaml
+name: ci
+
+on:
+	push:
+		branches: ["main", "master"]
+	pull_request:
+
+jobs:
+	quality:
+		runs-on: ubuntu-latest
+		steps:
+			- uses: actions/checkout@v4
+
+			- uses: actions/setup-python@v5
+				with:
+					python-version: "3.11"
+
+			- name: Install dependencies
+				run: |
+					python -m pip install --upgrade pip
+					pip install -e ".[dev]"
+
+			- name: Ruff
+				run: python -m ruff check .
+
+			- name: Mypy
+				run: python -m mypy src
+
+			- name: Pytest
+				run: python -m pytest -q
+```
+
+Checklist para activarlo:
+
+1. Crear repositorio en GitHub y hacer `git push`.
+2. Subir `.github/workflows/ci.yml`.
+3. Verificar en pestaña Actions que el job `quality` pase.
+4. (Recomendado) activar branch protection para exigir CI verde antes de merge.
+
+## Integracion recomendada (siguiente fase)
+
+- Wake word: `openWakeWord`.
+- VAD: `webrtcvad` o detector liviano equivalente.
+- STT: `faster-whisper` en `int8`.
+- TTS: `piper` invocado desde `PiperTTS`.
+
+## Seguridad
+
+- No ejecutes acciones fuera de lista blanca.
+- Mantener `dry_run: true` al inicio.
+- Agregar confirmacion explicita para comandos sensibles antes de implementarlos.
+
+## Estrategia de pruebas (desde el inicio)
+
+- Priorizar pruebas unitarias rapidas y deterministas para router, orquestador, acciones y cliente LLM.
+- Evitar efectos reales en tests: usar `dry_run` y mocks para red/subprocesos.
+- Cubrir casos felices + bordes + fallas esperadas (errores de red, config invalida, comandos fuera de lista blanca).
+- Mantener la mayoria de pruebas en capa unitaria y dejar pocas pruebas de integracion para cableado real (piramide de testing).
+
+## Pruebas de integracion minima
+
+- Flujo local: `texto -> router -> acciones` para comandos conocidos.
+- Flujo ambiguo: `texto -> router -> fallback LLM` cuando no hay intent confiable.
+- Modo charla: habilita uso temporal de LLM aunque `llm_enabled` este desactivado globalmente.
+- Politica de confianza: si la confianza del intent cae por debajo del umbral, se usa fallback LLM.
+- Arranque por configuracion: validar que `build_assistant` carga YAML y conecta componentes correctos.
+- Arranque con LLM habilitado: validar wiring de `OllamaClient` con mock (sin red real).

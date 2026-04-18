@@ -1,0 +1,118 @@
+Metadata-Version: 2.4
+Name: local-assistant
+Version: 0.1.0
+Summary: Hybrid local voice assistant for Windows
+Author: Local Assistant
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: pyyaml>=6.0.2
+Requires-Dist: requests>=2.32.3
+Requires-Dist: pydantic>=2.9.2
+Provides-Extra: dev
+Requires-Dist: pytest>=8.3.3; extra == "dev"
+Requires-Dist: ruff>=0.7.0; extra == "dev"
+Requires-Dist: mypy>=1.12.0; extra == "dev"
+Requires-Dist: types-requests>=2.32.0; extra == "dev"
+Requires-Dist: types-PyYAML>=6.0.12; extra == "dev"
+
+# Asistente Local Hibrido (Windows)
+
+Implementacion MVP alineada con tu plan maestro: comandos locales ultrarrapidos por reglas, y fallback a LLM local con Ollama solo cuando hace falta.
+
+## Principios aplicados
+
+- Arquitectura hibrida: `rules-first`, `LLM-on-demand`.
+- Seguridad por defecto: lista blanca + modo `dry_run`.
+- Dise\u00f1o desacoplado: router, acciones, LLM, STT y TTS en modulos separados.
+- Observabilidad: logs JSON locales en `logs/assistant.log`.
+
+## Estructura
+
+- `src/local_assistant/main.py`: entrada principal.
+- `src/local_assistant/assistant.py`: orquestacion y politica LLM.
+- `src/local_assistant/intent_router.py`: intents por patrones.
+- `src/local_assistant/actions/windows_actions.py`: acciones Windows seguras.
+- `src/local_assistant/llm/ollama_client.py`: cliente Ollama.
+- `config/settings.yaml`: configuracion local.
+
+## Quickstart
+
+1. Crear entorno e instalar dependencias (local):
+
+```powershell
+./scripts/bootstrap_local.ps1
+```
+
+2. Ejecutar pruebas unitarias:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+3. Ajustar lista blanca en `config/settings.yaml`.
+
+4. Ejecutar en modo consola:
+
+```powershell
+.\.venv\Scripts\python.exe -m local_assistant.main
+```
+
+5. Probar comandos:
+
+- `abre discord`
+- `busca en google mejores teclados mecanicos`
+- `busca en youtube benchmark 4070 ti`
+- `abre carpeta descargas`
+- `hablemos un rato`
+
+## Flujo Local De Calidad
+
+Todo se ejecuta en tu maquina, sin CI en la nube.
+
+1. Ejecutar chequeos completos:
+
+```powershell
+./scripts/quality_check.ps1
+```
+
+Si PowerShell bloquea scripts en tu equipo, habilitalos solo para la sesion actual:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+```
+
+2. Que valida este script:
+
+- Lint con Ruff.
+- Type-check con Mypy.
+- Pruebas con Pytest.
+- El script termina con error si cualquiera de los pasos falla.
+
+## Integracion recomendada (siguiente fase)
+
+- Wake word: `openWakeWord`.
+- VAD: `webrtcvad` o detector liviano equivalente.
+- STT: `faster-whisper` en `int8`.
+- TTS: `piper` invocado desde `PiperTTS`.
+
+## Seguridad
+
+- No ejecutes acciones fuera de lista blanca.
+- Mantener `dry_run: true` al inicio.
+- Agregar confirmacion explicita para comandos sensibles antes de implementarlos.
+
+## Estrategia de pruebas (desde el inicio)
+
+- Priorizar pruebas unitarias rapidas y deterministas para router, orquestador, acciones y cliente LLM.
+- Evitar efectos reales en tests: usar `dry_run` y mocks para red/subprocesos.
+- Cubrir casos felices + bordes + fallas esperadas (errores de red, config invalida, comandos fuera de lista blanca).
+- Mantener la mayoria de pruebas en capa unitaria y dejar pocas pruebas de integracion para cableado real (piramide de testing).
+
+## Pruebas de integracion minima
+
+- Flujo local: `texto -> router -> acciones` para comandos conocidos.
+- Flujo ambiguo: `texto -> router -> fallback LLM` cuando no hay intent confiable.
+- Modo charla: habilita uso temporal de LLM aunque `llm_enabled` este desactivado globalmente.
+- Politica de confianza: si la confianza del intent cae por debajo del umbral, se usa fallback LLM.
+- Arranque por configuracion: validar que `build_assistant` carga YAML y conecta componentes correctos.
+- Arranque con LLM habilitado: validar wiring de `OllamaClient` con mock (sin red real).

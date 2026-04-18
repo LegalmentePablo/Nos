@@ -1,0 +1,17 @@
+llm_enabled: true
+llm_intent_threshold: 0.8
+llm_chat_timeout_seconds: 180
+llm_model: "qwen2.5:3b-instruct-q4_K_M"
+ollama_host: "http://127.0.0.1:11434"
+
+dry_run: true
+
+app_whitelist:
+  discord: "start discord"
+  spotify: "start spotify"
+  chrome: "start chrome"
+
+folder_whitelist:
+  descargas: "%USERPROFILE%\\Downloads"
+  documentos: "%USERPROFILE%\\Documents"
+  escritorio: "%USERPROFILE%\\Desktop"
