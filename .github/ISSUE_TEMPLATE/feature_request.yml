@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose an improvement for the local assistant
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Please explain the value and expected behavior.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem are you trying to solve?
+      placeholder: Current limitation or pain point
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: What do you want to add or change?
+      placeholder: Describe the desired feature
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Is this MVP phase, hardening, or future phase?
+      placeholder: MVP / Phase 2 / Nice-to-have
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any workaround or alternative approach?
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Considerations
+      options:
+        - label: Preserves rules-first local path for simple commands
+        - label: Preserves whitelist and confirmation model for sensitive actions
+        - label: Keeps idle resource use low

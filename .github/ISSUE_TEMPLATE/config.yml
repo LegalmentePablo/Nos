@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security question
+    url: https://github.com/LegalmentePablo/Nos/discussions
+    about: Use discussions for non-actionable security questions without exposing sensitive details.
